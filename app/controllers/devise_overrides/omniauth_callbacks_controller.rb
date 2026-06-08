@@ -3,7 +3,7 @@ class DeviseOverrides::OmniauthCallbacksController < DeviseTokenAuth::OmniauthCa
 
   def omniauth_success
     get_resource_from_auth_hash
-
+    return if performed?
     @resource.present? ? sign_in_user : sign_up_user
   end
 
@@ -67,7 +67,10 @@ class DeviseOverrides::OmniauthCallbacksController < DeviseTokenAuth::OmniauthCa
     User
   end
 
-  def get_resource_from_auth_hash # rubocop:disable Naming/AccessorMethodName
+  def get_resource_from_auth_hash
+    if auth_hash.nil?
+      redirect_to login_page_url(error: 'oauth-failed') and return
+    end
     email = auth_hash.dig('info', 'email')
     @resource = resource_class.from_email(email)
   end
