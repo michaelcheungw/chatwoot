@@ -3,7 +3,7 @@ class DeviseOverrides::OmniauthCallbacksController < DeviseTokenAuth::OmniauthCa
 
   def redirect_callbacks
     key = "omniauth:#{SecureRandom.hex(16)}"
-    Redis.new(url: ENV.fetch('REDIS_URL')).setex(key, 300, request.env['omniauth.auth'].except('extra').to_json)
+    Redis.new(url: ENV.fetch('REDIS_URL'), ssl_params: { verify_mode: OpenSSL::SSL::VERIFY_NONE }).setex(key, 300, request.env['omniauth.auth'].except('extra').to_json)
     session['dta.omniauth.redis_key'] = key
     session['dta.omniauth.params'] = request.env['omniauth.params']
     devise_mapping = get_devise_mapping
@@ -23,7 +23,7 @@ class DeviseOverrides::OmniauthCallbacksController < DeviseTokenAuth::OmniauthCa
     @_auth_hash ||= begin
       key = session.delete('dta.omniauth.redis_key')
       return nil if key.nil?
-      data = Redis.new(url: ENV.fetch('REDIS_URL')).get(key)
+      data = Redis.new(url: ENV.fetch('REDIS_URL'), ssl_params: { verify_mode: OpenSSL::SSL::VERIFY_NONE }).get(key)
       return nil if data.nil?
       JSON.parse(data)
     end
